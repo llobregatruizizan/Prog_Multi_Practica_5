@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:paisesgui/data/repositories/paises_repository.dart';
 import 'package:paisesgui/domain/entities/continente.dart';
 import 'package:paisesgui/ui/screens/paises_screen.dart';
+import 'package:paisesgui/config/config.dart';
 
 /* Pantalla ContinentesScreen: muestra cinco CircleAvatar con los distintos continentes */
 
@@ -9,28 +10,31 @@ class ContinentesScreen extends StatelessWidget {
   ContinentesScreen({super.key});
 
   // Referencia al repositorio, de donde obtendremos la lista de continentes
-  final PaisesRepository _repository = PaisesRepository();
-
+final PaisesRepository _repository = PaisesRepository(Config.urlApi);
   @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-      // Estructura de la pantalla Material Design
-      body: Center(
-        // Centramos el contenido
-        child: SingleChildScrollView(
-          // Contenedor con scroll por si nos salimos del espacio disponible
-          child: Column(
-            // Organizamos los continentes en forma de columna
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: // Obtendremos la lista de widgets con los continentes con la
-                // función privada _creaListaContinentes.
-                _creaListaContinentes(_repository.getContinentes()),
-          ),
-        ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Center(
+      child: FutureBuilder<List<Continente>>(
+        future: _repository.getContinentes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: _creaListaContinentes(snapshot.data!),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Text("Error: ${snapshot.error}");
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 List<Widget> _creaListaContinentes(List<Continente> listaContinentes) {
