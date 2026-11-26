@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:paisesgui/data/repositories/paises_repository.dart';
 import 'package:paisesgui/domain/entities/pais.dart';
 import 'package:paisesgui/ui/screens/navigation_screen.dart';
+import 'package:paisesgui/config/config.dart';
+import 'package:paisesgui/ui/widgets/my_circular_progress_indicator.dart';
 
 class PaisesScreen extends StatelessWidget {
   final String nombreContinente;
@@ -9,30 +11,36 @@ class PaisesScreen extends StatelessWidget {
   PaisesScreen({super.key, required this.nombreContinente});
 
   // Referencia al repositorio, de donde obtendremos la lista de continentes
-  final PaisesRepository _repository = PaisesRepository();
-
+  final PaisesRepository _repository = PaisesRepository(Config.urlApi);
   /*
   */
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text(
-        'Paises de $nombreContinente',
-        style: const TextStyle(
-          fontFamily: "LeckerliOne",
-          fontSize: 24,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Paises de $nombreContinente',
+          style: const TextStyle(fontFamily: "LeckerliOne", fontSize: 24),
         ),
       ),
-    ),
-    body: Center(
-      // Proporciona a _creaLlistaPaises la lista de paises de Europa
-      child: _creaListaPaises(_repository.getPaises(nombreContinente)),
-    ),
-  );
-}
+      body: Center(
+        child: FutureBuilder<List<Pais>>(
+          future: _repository.getPaises(nombreContinente),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return _creaListaPaises(snapshot.data!);
+            } else if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            } else {
+              return const MyCircularProgressIndicator();
+            }
+          },
+        ),
+      ),
+    );
+  }
 
-  Widget? _creaListaPaises(List<Pais> paises) {
+  Widget _creaListaPaises(List<Pais> paises) {
     // Recibimos la lista de paises
 
     // TO-DO

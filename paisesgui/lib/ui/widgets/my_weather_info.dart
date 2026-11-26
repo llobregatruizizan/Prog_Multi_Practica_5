@@ -1,46 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:paisesgui/data/repositories/weather_repository.dart';
+import 'package:paisesgui/ui/widgets/my_circular_progress_indicator.dart';
 
-class MyWeatherInfo extends StatelessWidget {
-  const MyWeatherInfo({super.key});
+class MyWeatherInfo extends StatefulWidget {
+  final double? latitud;
+  final double? longitud;
+
+  const MyWeatherInfo({
+    super.key,
+    required this.latitud,
+    required this.longitud,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  State<MyWeatherInfo> createState() => _MyWeatherInfoState();
+}
 
-    return Column(
-      children: [
-        _obtenerIconoTiempo("0"),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.thermostat,
-              size: 35,
-            ),
-            Text(
-              "5º",
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.wind_power, size: 35),
-            const SizedBox(width: 30),
-            Text(
-              "20 km/h",
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(width: 30),
-            obtenerWidgetDireccionViento("0.0", context),
-          ],
-        ),
-      ],
+class _MyWeatherInfoState extends State<MyWeatherInfo> {
+  late Future<dynamic> _clima;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _clima = WeatherRepository.obtenerClima(
+      latitud: widget.latitud ?? 0.0,
+      longitud: widget.longitud ?? 0.0,
     );
   }
 
-  Widget obtenerWidgetDireccionViento(String direccionViento, BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<dynamic>(
+      future: _clima,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          var clima = snapshot.data["current_weather"];
+
+          return Column(
+            children: [
+              _obtenerIconoTiempo(clima["weathercode"].toString()),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.thermostat, size: 35),
+                  Text(
+                    "${clima["temperature"]}º",
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wind_power, size: 35),
+                  const SizedBox(width: 30),
+                  Text(
+                    "${clima["windspeed"]} km/h",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(width: 30),
+                  obtenerWidgetDireccionViento(
+                    clima["winddirection"].toString(),
+                    context,
+                  ),
+                ],
+              ),
+            ],
+          );
+        } else if (snapshot.hasError) {
+          return Text("Error: ${snapshot.error}");
+        } else {
+          return const MyCircularProgressIndicator();
+        }
+      },
+    );
+  }
+
+  Widget obtenerWidgetDireccionViento(
+    String direccionViento,
+    BuildContext context,
+  ) {
     double dir = double.parse(direccionViento);
     late Icon icono;
 
@@ -71,13 +112,12 @@ class MyWeatherInfo extends StatelessWidget {
       icono = const Icon(Icons.north);
       nombreViento = "Tramontana";
     }
-    return Row(children: [
-      Text(
-        nombreViento,
-        style: Theme.of(context).textTheme.headlineSmall,
-      ),
-      icono,
-    ]);
+    return Row(
+      children: [
+        Text(nombreViento, style: Theme.of(context).textTheme.headlineSmall),
+        icono,
+      ],
+    );
   }
 
   // Codigos de https://open-meteo.com/en/docs/dwd-api
@@ -98,7 +138,7 @@ class MyWeatherInfo extends StatelessWidget {
       "82",
       "95",
       "96",
-      "99"
+      "99",
     };
     Set<String> neu = <String>{"71", "73", "75", "77", "85", "86"};
 

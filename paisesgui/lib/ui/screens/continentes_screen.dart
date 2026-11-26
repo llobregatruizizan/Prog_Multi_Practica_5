@@ -3,6 +3,7 @@ import 'package:paisesgui/data/repositories/paises_repository.dart';
 import 'package:paisesgui/domain/entities/continente.dart';
 import 'package:paisesgui/ui/screens/paises_screen.dart';
 import 'package:paisesgui/config/config.dart';
+import 'package:paisesgui/ui/widgets/my_circular_progress_indicator.dart';
 
 /* Pantalla ContinentesScreen: muestra cinco CircleAvatar con los distintos continentes */
 
@@ -28,7 +29,7 @@ Widget build(BuildContext context) {
           } else if (snapshot.hasError) {
             return Text("Error: ${snapshot.error}");
           } else {
-            return const CircularProgressIndicator();
+            return const MyCircularProgressIndicator();
           }
         },
       ),

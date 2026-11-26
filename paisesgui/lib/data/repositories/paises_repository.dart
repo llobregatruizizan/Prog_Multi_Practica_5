@@ -1,69 +1,55 @@
 // Define el repositorio de acceso a los datos
 // Esta capa es la que se usa desde la aplicación para abstraer
 // el acceso a los datos.
-// Hemos cambiado el repositorio. 
-// Ahora en vez de obtenerlo de la clase PaisesApi lo obtenemos de PaisesEjemplo
+// Hemos cambiado el repositorio.
+// Ahora en vez de obtenerlo de la clase PaisesApi lo obtenemos de PaisesEjemplo (ya no jajaja)
 
-
-import 'package:paisesgui/data/services/paises_ejemplo.dart';
 import 'package:paisesgui/domain/entities/continente.dart';
 import 'package:paisesgui/domain/entities/pais.dart';
+import 'package:paisesgui/data/services/paises_api.dart';
 
 class PaisesRepository {
-  // Con late indicamos que este valor 
+  // Con late indicamos que este valor
   // se inicializar posteriormente (en el constructor)
-  late PaisesEjemplo api;
+  late PaisesApi api;
 
-  PaisesRepository() {
-    api = PaisesEjemplo();
+  PaisesRepository(String urlBase) {
+    api = PaisesApi(urlBase);
   }
-
-  List<Continente> getContinentes() {
-        // Devuelve una lista de provincias, obtenidas a partir de la propiedad
+  Future<List<Continente>> getContinentes() async {
+    // Devuelve una lista de provincias, obtenidas a partir de la propiedad
     // provincies de RepositoryData.
 
     List<Continente> continentes = [];
-    for (var conti in api.continentes) {
-      continentes.add(Continente(nombre: conti["nombre"], imagen: conti["imagen"]));
+    for (var conti in await api.getContinentes()) {
+      continentes.add(
+        Continente(nombre: conti["nombre"], imagen: conti["imagen"]),
+      );
     }
 
     return continentes;
   }
 
   // Implementar el método getPaises a partir del continente
-  List<Pais> getPaises(String nombreContinente){
-    List<Pais> paises = [];
+ Future<List<Pais>> getPaises(String nombreContinente) async {
+  List<Pais> paises = [];
 
-    // Recorremos la lista de provincies en RepositoryData para encontrar la que se busca
-    for (var conti in api.continentes) {
-      if (conti["nombre"] == nombreContinente) {
-        // Cuando encontramos el continente, reocrremos los paises
-        // y añadimos a la lista paises con los datos de cada pais
+  for (var paisJSON in await api.getPaises(nombreContinente)) {
+    paises.add(Pais.fromJSON(paisJSON));
+  }
 
-        for (var paisJSON in conti["paises"]) {
-          paises.add(Pais.fromJSON(paisJSON));
-        }
-      }
-    }
-
-    return paises;
-  }    
+  return paises;
+}
 
   // TO-DO:
   // Implementar el método infoPais
-  Pais infoPais(String nombrePais) {
+  Future<Pais?> infoPais(String nombrePais) async {
+  var paisJSON = await api.infoPais(nombrePais);
 
-  for (var conti in api.continentes) {
-    for (var paisJSON in conti["paises"]) {
-
-      if (paisJSON["nombre"] == nombrePais) {
-        return Pais.fromJSON(paisJSON);
-      }
-
-    }
+  if (paisJSON != null) {
+    return Pais.fromJSON(paisJSON);
   }
 
-  return Pais(nombre: 'Sin implementar');
-  }
-
+  return null;
+}
 }

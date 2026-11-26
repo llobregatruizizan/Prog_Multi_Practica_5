@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:paisesgui/data/repositories/paises_repository.dart';
 import 'package:paisesgui/domain/entities/pais.dart';
+import 'package:paisesgui/config/config.dart';
+import 'package:paisesgui/ui/widgets/my_circular_progress_indicator.dart';
 
 
 class InfoPaisGeneral extends StatelessWidget {
@@ -10,14 +12,12 @@ class InfoPaisGeneral extends StatelessWidget {
   InfoPaisGeneral({super.key, required this.nombrePais});
 
     // Referencia al repositorio, de donde obtendremos la lista de continentes
-  final PaisesRepository _repository = PaisesRepository();
-
+final PaisesRepository _repository = PaisesRepository(Config.urlApi);
 
   @override
   Widget build(BuildContext context) {
 
     // Recogemos el país del repositorio
-    Pais pais = _repository.infoPais(nombrePais);
     
     // TO-DO
     /*
@@ -30,9 +30,14 @@ class InfoPaisGeneral extends StatelessWidget {
     // Debéis tener en cuenta no sobrepasar los límites y dibujar fuera del espacio disponible
     // Para comprobar que no os salís, podéis probar a girar el dispositivo (si lo estáis haciendo sobre Android)
 
-    return Scaffold(
-           
-            body: SingleChildScrollView(
+   return Scaffold(
+  body: FutureBuilder<Pais?>(
+    future: _repository.infoPais(nombrePais),
+    builder: (context, snapshot) {
+      if (snapshot.hasData) {
+        Pais pais = snapshot.data!;
+
+        return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -88,9 +93,20 @@ class InfoPaisGeneral extends StatelessWidget {
                       textAlign: TextAlign.justify,
                     ),
                   ),
-                ],
+                ],                
               ),
-            ),
-          );
+            );
+          } else if (snapshot.hasError) {
+            return Text("Error: ${snapshot.error}");
+          } else if (snapshot.connectionState == ConnectionState.done) {
+            return const Text("País no encontrado");
+          } else {
+            return const Center(
+              child: MyCircularProgressIndicator(),
+            );
+          }
+        },
+      ),
+    );
   }
 }
